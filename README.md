@@ -15,7 +15,7 @@ with zero shipping fees.
 
 ## Features (planned)
 - [x] Project scaffold (Next.js + Tailwind)
-- [ ] Auth with college email restriction
+- [x] Auth with college email restriction
 - [ ] Item listing (create, edit, delete, mark sold)
 - [ ] Browse & search with category/price/size filters
 - [ ] In-app messaging (buyer-seller chat per item)
