@@ -1,6 +1,12 @@
-import { AuthProvider } from "@/context/AuthContext";
 import type { Metadata } from "next";
 import "./globals.css";
+import { AuthProvider } from "@/context/AuthContext";
+import Navbar from "@/components/Navbar";
+
+export const metadata: Metadata = {
+  title: "HostelThrift",
+  description: "A hyperlocal thrift marketplace for hostel residents",
+};
 
 export default function RootLayout({
   children,
@@ -9,7 +15,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body><AuthProvider>{children}</AuthProvider></body>
+      <body>
+        <AuthProvider>
+          <Navbar />
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   );
 }
