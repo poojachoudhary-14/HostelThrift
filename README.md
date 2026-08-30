@@ -21,9 +21,11 @@ with zero shipping fees.
 - [x] In-app messaging (buyer-seller chat per item)
 - [ ] Seller dashboard (active listings, incoming interest)
 - [ ] Admin moderation (report/remove listings)
+
 ## Live App
 
 🌐 [hostel-thrift.vercel.app](https://hostel-thrift.vercel.app)      
+
 
 ## Running Locally (for development)
 
@@ -40,3 +42,15 @@ Built as a college project to solve a real problem — students accumulate
 clothes, bags, and gear they no longer need, and a hostel-only marketplace 
 makes buying/selling low-friction, trustworthy (college email verified), 
 and free of shipping hassle since everyone's in the same building.
+
+## Contributing
+
+This started as a college project, but if you'd like to improve it, fix a
+bug, or add a feature — contributions are welcome!
+
+Feel free to:
+- Open an issue if you spot a bug or have a suggestion
+- Fork the repo and submit a pull request
+- Reach out if you'd like to collaborate
+
+No contribution is too small — even a typo fix or a README improvement is appreciated. 🙂
