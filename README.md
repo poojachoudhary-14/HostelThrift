@@ -21,20 +21,16 @@ with zero shipping fees.
 - [x] In-app messaging (buyer-seller chat per item)
 - [ ] Seller dashboard (active listings, incoming interest)
 - [ ] Admin moderation (report/remove listings)
+## Live App
 
-## Getting Started
+🌐 [hostel-thrift.vercel.app](https://hostel-thrift.vercel.app)      
 
-First, install dependencies:
+## Running Locally (for development)
 
-\`\`\`bash
+````bash
 npm install
-\`\`\`
-
-Then run the development server:
-
-\`\`\`bash
 npm run dev
-\`\`\`
+````
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
