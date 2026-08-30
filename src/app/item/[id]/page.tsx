@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, deleteDoc, collection, addDoc, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
-import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
 
 type Item = {
   title: string;
@@ -29,6 +28,7 @@ export default function ItemDetailPage() {
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
   const [starting, setStarting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -54,7 +54,7 @@ export default function ItemDetailPage() {
     return <p className="p-8 text-center">Item not found.</p>;
   }
 
-    const isOwnItem = user?.uid === item.sellerId;
+  const isOwnItem = user?.uid === item.sellerId;
 
   const handleMessageSeller = async () => {
     if (!user) {
@@ -64,7 +64,6 @@ export default function ItemDetailPage() {
 
     setStarting(true);
     try {
-      // Check if a conversation between this buyer and this item already exists
       const q = query(
         collection(db, "conversations"),
         where("itemId", "==", id),
@@ -75,10 +74,8 @@ export default function ItemDetailPage() {
       let conversationId: string;
 
       if (!existing.empty) {
-        // Reuse existing conversation
         conversationId = existing.docs[0].id;
       } else {
-        // Create a new conversation
         const newConvo = await addDoc(collection(db, "conversations"), {
           itemId: id,
           itemTitle: item.title,
@@ -99,9 +96,24 @@ export default function ItemDetailPage() {
     }
   };
 
+  const handleDelete = async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this listing? This cannot be undone."
+    );
+    if (!confirmed) return;
+
+    setDeleting(true);
+    try {
+      await deleteDoc(doc(db, "items", id));
+      router.push("/");
+    } catch (err) {
+      console.error("Error deleting item:", err);
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      {/* Image gallery */}
       <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-3">
         {item.imageUrls?.[activeImage] && (
           <img
@@ -128,7 +140,6 @@ export default function ItemDetailPage() {
         </div>
       )}
 
-      {/* Details */}
       <div className="flex items-start justify-between mb-2">
         <h1 className="text-2xl font-bold">{item.title}</h1>
         {item.status !== "available" && (
@@ -156,7 +167,7 @@ export default function ItemDetailPage() {
         <p className="text-sm text-gray-600">Hostel: {item.hostelBlock}</p>
       </div>
 
-            {!isOwnItem && item.status === "available" && (
+      {!isOwnItem && item.status === "available" && (
         <button
           onClick={handleMessageSeller}
           disabled={starting}
@@ -167,9 +178,18 @@ export default function ItemDetailPage() {
       )}
 
       {isOwnItem && (
-        <p className="text-sm text-gray-500 text-center">
-          This is your own listing.
-        </p>
+        <div className="space-y-2">
+          <p className="text-sm text-gray-500 text-center">
+            This is your own listing.
+          </p>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="w-full border border-red-500 text-red-500 rounded px-3 py-2.5 disabled:opacity-50 hover:bg-red-50"
+          >
+            {deleting ? "Deleting..." : "Delete Listing"}
+          </button>
+        </div>
       )}
     </div>
   );
