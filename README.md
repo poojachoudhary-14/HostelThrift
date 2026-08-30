@@ -22,19 +22,17 @@ with zero shipping fees.
 - [ ] Seller dashboard (active listings, incoming interest)
 - [ ] Admin moderation (report/remove listings)
 
-## Getting Started
+## Live App
 
-First, install dependencies:
+🌐 [hostel-thrift.vercel.app](https://hostel-thrift.vercel.app)      
 
-\`\`\`bash
+
+## Running Locally (for development)
+
+````bash
 npm install
-\`\`\`
-
-Then run the development server:
-
-\`\`\`bash
 npm run dev
-\`\`\`
+````
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
@@ -44,3 +42,15 @@ Built as a college project to solve a real problem — students accumulate
 clothes, bags, and gear they no longer need, and a hostel-only marketplace 
 makes buying/selling low-friction, trustworthy (college email verified), 
 and free of shipping hassle since everyone's in the same building.
+
+## Contributing
+
+This started as a college project, but if you'd like to improve it, fix a
+bug, or add a feature — contributions are welcome!
+
+Feel free to:
+- Open an issue if you spot a bug or have a suggestion
+- Fork the repo and submit a pull request
+- Reach out if you'd like to collaborate
+
+No contribution is too small — even a typo fix or a README improvement is appreciated. 🙂
