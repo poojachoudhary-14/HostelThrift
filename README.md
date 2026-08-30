@@ -4,7 +4,7 @@ A hyperlocal peer-to-peer thrift marketplace built for hostel residents
 to buy, sell, and bargain on second-hand clothes, bags, and essentials — 
 with zero shipping fees.
 
-## Status: In development 🚧
+## Status: Core features complete, still a lot to do 🚧
 
 ## Tech Stack
 - **Frontend:** Next.js (App Router) + Tailwind CSS + TypeScript
@@ -16,9 +16,9 @@ with zero shipping fees.
 ## Features (planned)
 - [x] Project scaffold (Next.js + Tailwind)
 - [x] Auth with college email restriction
-- [ ] Item listing (create, edit, delete, mark sold)
+- [x] Item listing (create, edit, delete, mark sold)
 - [ ] Browse & search with category/price/size filters
-- [ ] In-app messaging (buyer-seller chat per item)
+- [x] In-app messaging (buyer-seller chat per item)
 - [ ] Seller dashboard (active listings, incoming interest)
 - [ ] Admin moderation (report/remove listings)
 
