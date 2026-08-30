@@ -246,6 +246,13 @@ keep the project fully free with no card required, switched to Cloudinary:
 - Images organized into `hostelthrift/{userId}/` folders in Cloudinary
 - Firebase Auth + Firestore are unaffected — only image storage moved
 
+**Locked down Firestore security rules before going public.**
+Switched from test mode (`allow read, write: if true`) to real rules:
+users can only edit their own profile; items can only be edited/deleted
+by their original seller; conversations and messages are only
+readable/writable by the buyer and seller actually involved in that
+conversation. Enforced server-side by Firebase, not just hidden in the UI.
+
 ---
 
 ## 7. Bugs Hit & How They Were Fixed (good to remember!)
