@@ -1,5 +1,7 @@
 # HostelThrift — Project Log & Learning Notes
 
+**Status: 🚀 Live at https://hostel-thrift.vercel.app — core v1 complete**
+
 A running record of what the project is, what's been built, decisions made,
 and what's coming next. Keep updating this as you go — it doubles as
 documentation for your GitHub repo and a way to track your own learning.
@@ -26,8 +28,8 @@ with zero shipping fees, since everyone lives in the same hostel.
 | Frontend | Next.js (App Router) + TypeScript + Tailwind CSS | One repo for frontend + backend logic, fast styling, modern and resume-friendly |
 | Backend/Database | Firebase (Firestore) | Free tier is generous, no separate backend server needed, fast to set up |
 | Auth | Firebase Authentication (Email/Password) | Built-in, easy to restrict to college email domain |
-| Image Storage | Firebase Storage | Same ecosystem as Auth/DB, simple SDK |
-| Deployment (planned) | Vercel | Free, integrates natively with Next.js |
+| Image Storage | Cloudinary | Switched from Firebase Storage — see Decision Log |
+| Deployment | Vercel | Free, integrates natively with Next.js — **live** |
 | Version Control | Git + GitHub | Industry standard, portfolio visibility |
 
 **Note:** Originally considered Supabase (Postgres) — switched to Firebase
@@ -83,29 +85,33 @@ roomNumber    (string)
 createdAt     (string, ISO date)
 ```
 
-### `items` collection (planned, not built yet)
+### `items` collection
 ```
 sellerId      (string, references users doc ID)
+sellerName    (string)
+hostelBlock   (string)
 title         (string)
 description   (string)
-category      (string: ethnic_wear | western_wear | bags_shoes | electronics | books_equipment | other)
-condition     (string: brand_new | like_new | gently_used | well_loved)
-size          (string, optional)
+category      (string — e.g. "Western Wear", "Electronics", etc.)
+condition     (string — e.g. "Like New", "Gently Used", etc.)
 price         (number)
-status        (string: available | reserved | sold)
-imageUrls     (array of strings, from Firebase Storage)
+status        (string: "available" | "reserved" | "sold")
+imageUrls     (array of strings, from Cloudinary)
 createdAt     (string, ISO date)
 ```
 
-### `conversations` collection (planned)
+### `conversations` collection
 ```
 itemId        (string, references items doc)
+itemTitle     (string)
+itemImage     (string, first image URL)
 buyerId       (string, references users doc)
 sellerId      (string, references users doc)
+sellerName    (string)
 createdAt     (string, ISO date)
 ```
 
-### `messages` subcollection (planned, nested under each conversation)
+### `messages` subcollection (nested under each conversation: `conversations/{id}/messages`)
 ```
 senderId      (string)
 text          (string)
@@ -176,8 +182,55 @@ createdAt     (string, ISO date)
 ### ✅ Homepage / Browse feed (`src/app/page.tsx`)
 - Fetches all documents from `items`, ordered by `createdAt` descending
 - Displays as a responsive grid: image, title, price, hostel block, status
-- Each card links to `/item/[id]` (detail page not built yet — currently 404s)
+- Each card links to `/item/[id]`
 - Shows a logged-out landing message with a Log In link if not authenticated
+
+### ✅ Item detail page (`src/app/item/[id]/page.tsx`)
+- Dynamic route using Next.js `[id]` folder convention
+- Shows full image gallery (with thumbnail switcher), title, price,
+  category/condition tags, description, seller name, hostel
+- **"Message Seller" button** (hidden if viewing your own item, or if the
+  item isn't `available`): checks for an existing conversation between this
+  buyer and this item first (avoids duplicates), reuses it if found,
+  otherwise creates a new `conversations` doc, then routes to the chat thread
+- **Seller-only controls** (shown only if you're the listing's owner):
+  - Status toggle buttons: Available / Reserved / Sold — updates the
+    item's `status` field in Firestore instantly, reflected everywhere
+    (homepage grid shows a "Sold"/"Reserved" tag; Message button disappears
+    for buyers once not available)
+  - **Delete Listing** button — confirms first, then deletes the item doc
+    from Firestore and redirects home (note: doesn't clean up the images
+    from Cloudinary, only removes the Firestore record)
+
+### ✅ Chat — thread page (`src/app/chats/[id]/page.tsx`)
+- Fetches the conversation's details once, and its messages on load
+- **Polls every 5 seconds** to check for new messages (the "not-real-time
+  but good enough" approach planned from the start)
+- Sending a message writes to the `messages` subcollection, and is also
+  added to local state immediately so it appears instantly instead of
+  waiting for the next poll
+- Messages align right (black bubble) if sent by you, left (gray) if from
+  the other person
+- Auto-scrolls to the latest message
+
+### ✅ Chat — list page (`src/app/chats/page.tsx`)
+- Fetches conversations two ways — where you're the buyer, and separately
+  where you're the seller — then merges them into one list (Firestore's
+  free-tier query setup doesn't easily support "where A or B" across
+  different fields in one query)
+- Each row links to that conversation's thread page
+- Tested successfully with two separate logged-in accounts messaging back
+  and forth about a real listing
+
+### ✅ Deployed to Vercel
+- Live at **https://hostel-thrift.vercel.app**
+- Connected via GitHub integration (Vercel auto-installs as a GitHub App,
+  scoped to just the `HostelThrift` repo)
+- All 6 Firebase config values added manually as Environment Variables in
+  Vercel's project settings (since `.env.local` is correctly gitignored
+  and never gets pushed, Vercel doesn't see it automatically)
+- Confirmed working end-to-end on the live URL: signup, login, browse,
+  post an item, chat — all tested directly on production, not just localhost
 
 ---
 
@@ -209,28 +262,51 @@ keep the project fully free with no card required, switched to Cloudinary:
 | Sell form stuck on "Posting..." forever | Firebase Storage now requires the paid Blaze plan — image uploads silently 404'd (confirmed via browser console: "Preflight response... Status code: 404") | Switched image uploads to Cloudinary instead |
 | Uploaded image appeared mixed in with Cloudinary's sample images | No folder was specified in the upload request | Added `formData.append("folder", ...)` to organize uploads per-user |
 | Homepage showed old test content instead of the new item grid | Dev server / browser served stale content after a large file replace | Hard-restarted `npm run dev` and hard-refreshed the browser |
+| `Can't find variable: handleDelete` runtime error | While adding a delete handler, the new function got pasted *inside* the middle of the existing `handleMessageSeller` function instead of after it, breaking both | Rewrote the whole file cleanly, with each function properly separated |
+| `git push` rejected with "fetch first" (happened a couple of times) | An edit was made directly on GitHub's website (e.g. ticking a README checkbox), creating a commit there that the local copy didn't have yet | `git pull origin main --no-rebase` to merge remote changes in first, then push |
 
 **Lesson:** most of these were environment/setup/caching issues, not logic
 bugs — completely normal for a first real project. When something looks
 broken but the code looks correct, try in order: hard refresh browser →
-restart dev server → check browser console for the actual error.
+restart dev server → check browser console for the actual error. When a
+function suddenly "can't find" something it clearly defines, check that a
+copy-paste didn't land *inside* another function instead of after it.
 
 ---
 
-## 8. What's Next
+## 8. What's Next (post-launch polish)
 
-In order:
-1. **Item detail page** (`/item/[id]`) — full photos, description, seller
-   info, "Message Seller" button
-2. **Simple chat (polling-based)** — conversations + messages collections,
-   refetch every ~10 seconds
-3. **Seller dashboard** — manage own listings, toggle Available/Reserved/Sold
-4. **Search & filters** on the homepage (category, price, size)
-5. **Deploy to Vercel** — get it live on a real URL
+The v1 core loop is complete and live. Everything below is optional polish,
+not required for real hostel use:
+
+1. **Search & filters** on the homepage (category, price range, size)
+2. **Seller dashboard** — a dedicated page listing just "my active items"
+   with quick status/delete actions, instead of navigating to each item
+3. **Edit listing** — currently you can change status or delete, but not
+   edit the title/price/photos of an existing listing
+4. **Show buyer's real name in chat** — right now the seller's side of a
+   chat just shows "Buyer" instead of the actual buyer's name
+5. **Clean up Cloudinary images on delete** — deleting a listing currently
+   only removes the Firestore doc, images stay in Cloudinary
+6. **Firestore security rules** — currently in "test mode" (fully open).
+   Before wider launch, tighten rules so, e.g., only a document's owner can
+   edit/delete it, enforced server-side (not just hidden in the UI)
+7. **Custom domain** (optional) — Vercel gives a free `.vercel.app` URL;
+   could add a custom domain later if wanted
 
 ---
 
-## 9. Useful Commands Reference
+## 9. Launch Checklist (for actually rolling out to the hostel)
+
+- [ ] Post 10-15 real items yourself before announcing, so it doesn't look empty
+- [ ] Get 2-3 friends to commit to posting on launch day
+- [ ] Share the live link in hostel WhatsApp/group chats
+- [ ] Keep an eye on Firestore/Cloudinary usage in their free-tier dashboards
+      for the first week or two, just to get a feel for real usage volume
+
+---
+
+## 10. Useful Commands Reference
 
 ```bash
 # Navigate to project
@@ -257,7 +333,7 @@ open -a TextEdit path/to/file
 
 ---
 
-## 10. Key Concepts Learned So Far
+## 11. Key Concepts Learned So Far
 
 - **Git vs GitHub**: Git is the version control tool running on your
   computer; GitHub is where that history gets backed up/hosted online.
@@ -286,3 +362,16 @@ open -a TextEdit path/to/file
 - **Stale dev server / cache issues**: sometimes code changes don't show up
   even when saved correctly — restarting `npm run dev` and hard-refreshing
   the browser (`Cmd+Shift+R`) resolves most of these.
+- **Firestore subcollections**: a collection can be nested inside a specific
+  document (e.g. `conversations/{id}/messages`) rather than sitting at the
+  top level — keeps related data (all messages for *one* conversation)
+  scoped together instead of filtering one giant flat collection.
+- **Environment variables in deployment**: `.env.local` only exists on your
+  own computer and is deliberately never pushed to GitHub. A hosting
+  platform like Vercel has no way to see those values automatically — they
+  have to be re-entered manually in the platform's own settings (Vercel's
+  "Environment Variables" section) so the deployed app can access them.
+- **Polling vs WebSockets, in practice**: seeing the 5-second-delay chat
+  actually feel "fine" in real use confirmed the original scoping call —
+  for a hostel-scale app, simple polling is genuinely good enough, and the
+  complexity of real-time infrastructure wasn't needed for v1.
