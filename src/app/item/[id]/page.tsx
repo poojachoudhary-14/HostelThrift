@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { doc, getDoc, deleteDoc, collection, addDoc, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, deleteDoc, updateDoc, collection, addDoc, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 
@@ -29,6 +29,7 @@ export default function ItemDetailPage() {
   const [activeImage, setActiveImage] = useState(0);
   const [starting, setStarting] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -112,6 +113,18 @@ export default function ItemDetailPage() {
     }
   };
 
+  const handleStatusChange = async (newStatus: string) => {
+    setUpdatingStatus(true);
+    try {
+      await updateDoc(doc(db, "items", id), { status: newStatus });
+      setItem((prev) => (prev ? { ...prev, status: newStatus } : prev));
+    } catch (err) {
+      console.error("Error updating status:", err);
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-3">
@@ -177,11 +190,29 @@ export default function ItemDetailPage() {
         </button>
       )}
 
-      {isOwnItem && (
+            {isOwnItem && (
         <div className="space-y-2">
-          <p className="text-sm text-gray-500 text-center">
+          <p className="text-sm text-gray-500 text-center mb-1">
             This is your own listing.
           </p>
+
+          <div className="flex gap-2">
+            {["available", "reserved", "sold"].map((statusOption) => (
+              <button
+                key={statusOption}
+                onClick={() => handleStatusChange(statusOption)}
+                disabled={updatingStatus || item.status === statusOption}
+                className={`flex-1 text-sm rounded px-2 py-2 border capitalize disabled:opacity-50 ${
+                  item.status === statusOption
+                    ? "bg-black text-white border-black"
+                    : "border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                {statusOption}
+              </button>
+            ))}
+          </div>
+
           <button
             onClick={handleDelete}
             disabled={deleting}
