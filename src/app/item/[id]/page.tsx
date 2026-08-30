@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
 
 type Item = {
   title: string;
@@ -27,6 +28,7 @@ export default function ItemDetailPage() {
   const [item, setItem] = useState<Item | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
+  const [starting, setStarting] = useState(false);
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -52,7 +54,50 @@ export default function ItemDetailPage() {
     return <p className="p-8 text-center">Item not found.</p>;
   }
 
-  const isOwnItem = user?.uid === item.sellerId;
+    const isOwnItem = user?.uid === item.sellerId;
+
+  const handleMessageSeller = async () => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    setStarting(true);
+    try {
+      // Check if a conversation between this buyer and this item already exists
+      const q = query(
+        collection(db, "conversations"),
+        where("itemId", "==", id),
+        where("buyerId", "==", user.uid)
+      );
+      const existing = await getDocs(q);
+
+      let conversationId: string;
+
+      if (!existing.empty) {
+        // Reuse existing conversation
+        conversationId = existing.docs[0].id;
+      } else {
+        // Create a new conversation
+        const newConvo = await addDoc(collection(db, "conversations"), {
+          itemId: id,
+          itemTitle: item.title,
+          itemImage: item.imageUrls?.[0] || "",
+          buyerId: user.uid,
+          sellerId: item.sellerId,
+          sellerName: item.sellerName,
+          createdAt: new Date().toISOString(),
+        });
+        conversationId = newConvo.id;
+      }
+
+      router.push(`/chats/${conversationId}`);
+    } catch (err) {
+      console.error("Error starting conversation:", err);
+    } finally {
+      setStarting(false);
+    }
+  };
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
@@ -111,12 +156,13 @@ export default function ItemDetailPage() {
         <p className="text-sm text-gray-600">Hostel: {item.hostelBlock}</p>
       </div>
 
-      {!isOwnItem && item.status === "available" && (
+            {!isOwnItem && item.status === "available" && (
         <button
-          onClick={() => alert("Chat feature coming next!")}
-          className="w-full bg-black text-white rounded px-3 py-2.5"
+          onClick={handleMessageSeller}
+          disabled={starting}
+          className="w-full bg-black text-white rounded px-3 py-2.5 disabled:opacity-50"
         >
-          Message Seller
+          {starting ? "Starting chat..." : "Message Seller"}
         </button>
       )}
 
